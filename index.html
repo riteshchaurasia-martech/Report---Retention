@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .date-range {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .journey-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .node-id {
+            background: #e8eaf6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .metric-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .metric-value.empty {
+            color: #ccc;
+            font-style: italic;
+        }
+
+        .month-header {
+            font-weight: 700;
+            color: white;
+            padding: 12px 15px !important;
+            text-align: center;
+        }
+
+        .month-march {
+            background: #64b5f6;
+        }
+
+        .month-april {
+            background: #81c784;
+        }
+
+        .month-may {
+            background: #e57373;
+        }
+
+        .month-june {
+            background: #ffb74d;
+        }
+
+        .month-july {
+            background: #64b5f6;
+        }
+
+        .month-august {
+            background: #81c784;
+        }
+
+        .section-header {
+            background: #f5f5f5;
+            padding: 10px 15px;
+            font-weight: 600;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-wrapper {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .upload-section {
+            background: #f0f7ff;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 30px;
+        }
+
+        .upload-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            padding: 15px;
+            background: #ffebee;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .success-message {
+            color: #388e3c;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #388e3c;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .header-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Journey Analytics Dashboard</h1>
+            <div class="header-info">
+                <div class="date-range">
+                    <span id="currentMonth"></span>
+                </div>
+                <div class="controls">
+                    <select id="monthFilter">
+                        <option value="">All Months</option>
+                        <option value="March">March</option>
+                        <option value="April">April</option>
+                        <option value="May">May</option>
+                        <option value="June">June</option>
+                        <option value="July">July</option>
+                        <option value="August">August</option>
+                    </select>
+                    <button onclick="loadDataFromGitHub()">🔄 Refresh Data</button>
+                </div>
+            </div>
+        </header>
+
+        <div id="messageContainer"></div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">Total Journeys</div>
+                <div class="stat-value" id="totalJourneys">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Deliver Rate</div>
+                <div class="stat-value" id="avgDeliverRate">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg View Ratio</div>
+                <div class="stat-value" id="avgViewRatio">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Click Ratio</div>
+                <div class="stat-value" id="avgClickRatio">0%</div>
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-title">📝 How to Add Your Monthly Data:</div>
+            <div class="upload-text">
+                1. Add your CSV/JSON data to the <code>data.json</code> file in your GitHub repo<br>
+                2. Follow the format: Journey Name, Journey ID, Node ID, Node Name, and metrics for each month<br>
+                3. Click "Refresh Data" above to load the latest data<br>
+                4. The dashboard will automatically calculate all ratios and percentages
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-wrapper">
+                <div class="chart-title">Deliver Rate by Journey</div>
+                <canvas id="deliverChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <div class="chart-title">View Ratio Trends</div>
+                <canvas id="viewChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <div class="chart-title">Click Ratio Trends</div>
+                <canvas id="clickChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <div class="chart-title">Conversion Ratio Trends</div>
+                <canvas id="conversionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Journey Name</th>
+                        <th>Journey ID</th>
+                        <th>Node ID</th>
+                        <th>Node Name (OS/Type)</th>
+                        <th colspan="3" style="text-align: center; background: #e3f2fd;">Deliver Rate</th>
+                        <th colspan="3" style="text-align: center; background: #f3e5f5;">Viewed Count</th>
+                        <th colspan="3" style="text-align: center; background: #fce4ec;">Click</th>
+                        <th colspan="3" style="text-align: center; background: #fff3e0;">Conversion</th>
+                    </tr>
+                    <tr id="monthHeaderRow">
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const GITHUB_REPO = 'YOUR-USERNAME/YOUR-REPO-NAME'; // Update this
+        const DATA_FILE = 'data.json';
+        const RAW_GITHUB_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${DATA_FILE}`;
+
+        let allData = [];
+        let charts = {};
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCurrentMonth();
+            loadDataFromGitHub();
+        });
+
+        // Filter data by month
+        document.getElementById('monthFilter').addEventListener('change', () => {
+            renderTable();
+            updateCharts();
+        });
+
+        function updateCurrentMonth() {
+            const now = new Date();
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('currentMonth').textContent = 
+                `Latest Report: ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+        }
+
+        async function loadDataFromGitHub() {
+            const messageContainer = document.getElementById('messageContainer');
+            try {
+                const response = await fetch(RAW_GITHUB_URL);
+                if (!response.ok) {
+                    throw new Error('Data file not found');
+                }
+                allData = await response.json();
+                messageContainer.innerHTML = '<div class="success-message">✅ Data loaded successfully!</div>';
+                setTimeout(() => messageContainer.innerHTML = '', 3000);
+                renderTable();
+                updateStats();
+                updateCharts();
+            } catch (error) {
+                messageContainer.innerHTML = `<div class="error-message">⚠️ Error loading data: ${error.message}. Make sure data.json exists in your GitHub repo.</div>`;
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function getSelectedMonth() {
+            return document.getElementById('monthFilter').value;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const monthHeaderRow = document.getElementById('monthHeaderRow');
+            tbody.innerHTML = '';
+            
+            // Get unique months
+            const allMonths = new Set();
+            allData.forEach(row => {
+                Object.keys(row).forEach(key => {
+                    ['march', 'april', 'may', 'june', 'july', 'august'].forEach(month => {
+                        if (key.toLowerCase().includes(month)) {
+                            allMonths.add(month.charAt(0).toUpperCase() + month.slice(1));
+                        }
+                    });
+                });
+            });
+            const months = Array.from(allMonths).sort();
+
+            // Create month header
+            monthHeaderRow.innerHTML = '<th></th><th></th><th></th><th></th>';
+            const metricTypes = ['Deliver Rate', 'Viewed Count', 'Click', 'Conversion'];
+            metricTypes.forEach(metric => {
+                months.forEach(month => {
+                    const monthClass = `month-${month.toLowerCase()}`;
+                    monthHeaderRow.innerHTML += `<th class="month-header ${monthClass}">${month}</th>`;
+                });
+            });
+
+            // Populate table rows
+            allData.forEach(row => {
+                const selectedMonth = getSelectedMonth();
+                const tr = document.createElement('tr');
+                
+                tr.innerHTML = `
+                    <td class="journey-name">${row['Journey Name'] || ''}</td>
+                    <td>${row['Journey ID'] || ''}</td>
+                    <td><span class="node-id">${row['Node ID'] || ''}</span></td>
+                    <td>${row['Node Name (OS / Type)'] || ''}</td>
+                `;
+
+                // Add metrics
+                metricTypes.forEach(metric => {
+                    months.forEach(month => {
+                        const key = `${metric} - ${month}`;
+                        const value = row[key];
+                        const displayValue = value ? parseFloat(value).toFixed(2) + '%' : '-';
+                        tr.innerHTML += `<td class="metric-value">${displayValue}</td>`;
+                    });
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStats() {
+            const journeys = allData.length;
+            document.getElementById('totalJourneys').textContent = journeys;
+
+            if (journeys > 0) {
+                // Calculate averages (you can customize this)
+                let deliverSum = 0, viewSum = 0, clickSum = 0, count = 0;
+
+                allData.forEach(row => {
+                    Object.keys(row).forEach(key => {
+                        if (key.includes('Deliver Rate')) {
+                            const val = parseFloat(row[key]);
+                            if (!isNaN(val)) { deliverSum += val; count++; }
+                        }
+                        if (key.includes('Viewed Count')) {
+                            const val = parseFloat(row[key]);
+                            if (!isNaN(val)) { viewSum += val; }
+                        }
+                        if (key.includes('Click') && !key.includes('Clicked')) {
+                            const val = parseFloat(row[key]);
+                            if (!isNaN(val)) { clickSum += val; }
+                        }
+                    });
+                });
+
+                document.getElementById('avgDeliverRate').textContent = 
+                    (count > 0 ? (deliverSum / count).toFixed(2) : '0') + '%';
+                document.getElementById('avgViewRatio').textContent = 
+                    (viewSum / allData.length).toFixed(2) + '%';
+                document.getElementById('avgClickRatio').textContent = 
+                    (clickSum / allData.length).toFixed(2) + '%';
+            }
+        }
+
+        function updateCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+
+            const journeyNames = allData.map(row => row['Journey Name'] || 'Unknown');
+            const months = ['March', 'April', 'May', 'June', 'July', 'August'];
+
+            // Deliver Rate Chart
+            const deliverCtx = document.getElementById('deliverChart');
+            if (deliverCtx) {
+                const deliverData = allData.map(row => {
+                    const val = row['Deliver Rate - March'] || 0;
+                    return parseFloat(val);
+                });
+                charts.deliver = new Chart(deliverCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: journeyNames,
+                        datasets: [{
+                            label: 'Deliver Rate',
+                            data: deliverData,
+                            backgroundColor: '#64b5f6',
+                            borderColor: '#1976d2',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, max: 100 } }
+                    }
+                });
+            }
+
+            // View Chart
+            const viewCtx = document.getElementById('viewChart');
+            if (viewCtx) {
+                const viewData = months.map(month => {
+                    const sum = allData.reduce((acc, row) => {
+                        const val = parseFloat(row[`Viewed Count - ${month}`]) || 0;
+                        return acc + val;
+                    }, 0);
+                    return (sum / allData.length).toFixed(2);
+                });
+                charts.view = new Chart(viewCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Avg View Ratio',
+                            data: viewData,
+                            borderColor: '#81c784',
+                            backgroundColor: 'rgba(129, 199, 132, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: true } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // Click Chart
+            const clickCtx = document.getElementById('clickChart');
+            if (clickCtx) {
+                const clickData = months.map(month => {
+                    const sum = allData.reduce((acc, row) => {
+                        const val = parseFloat(row[`Click - ${month}`]) || 0;
+                        return acc + val;
+                    }, 0);
+                    return (sum / allData.length).toFixed(2);
+                });
+                charts.click = new Chart(clickCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Avg Click Ratio',
+                            data: clickData,
+                            borderColor: '#e57373',
+                            backgroundColor: 'rgba(229, 115, 115, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: true } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // Conversion Chart
+            const conversionCtx = document.getElementById('conversionChart');
+            if (conversionCtx) {
+                const conversionData = months.map(month => {
+                    const sum = allData.reduce((acc, row) => {
+                        const val = parseFloat(row[`Conversion - ${month}`]) || 0;
+                        return acc + val;
+                    }, 0);
+                    return (sum / allData.length).toFixed(2);
+                });
+                charts.conversion = new Chart(conversionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Avg Conversion Ratio',
+                            data: conversionData,
+                            borderColor: '#ffb74d',
+                            backgroundColor: 'rgba(255, 183, 77, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: true } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
